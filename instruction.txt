@@ -1,0 +1,17 @@
+
+
+
+
+
+# Allow network access
+OLLAMA_HOST=0.0.0.0 ollama serve
+
+install olama first in mechine
+curl -fsSL https://ollama.com/install.sh | sh
+
+
+# In another terminal (on the server)
+ollama pull deepseek-r1
+
+
+python manage.py runserver 0.0.0.0:8000
