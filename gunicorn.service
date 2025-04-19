@@ -1,0 +1,17 @@
+[Unit]
+Description=gunicorn daemon
+Requires=gunicorn.socket
+After=network.target
+
+[Service]
+User=myntra
+Group=myntra
+WorkingDirectory=/home/myntra/ai_project
+ExecStart=/home/myntra/ai_project/.venv/bin/gunicorn \
+    --access-logfile - \
+    --workers 3 \
+    --bind unix:/run/gunicorn.sock \
+    core.wsgi:application
+
+[Install]
+WantedBy=multi-user.target 

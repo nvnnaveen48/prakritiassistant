@@ -1,34 +1,13 @@
+{% load static %}
+{% load chat_extras %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    {% load static %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prakriti Assistant</title>
     <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
     <style>
-        /* Reduced logo size */
-        .header img {
-            width: 60px;  /* Reduced from 100px */
-            height: auto; /* Maintain aspect ratio */
-            margin-bottom: 15px;
-        }
-
-        /* Improved response container */
-        .ai-message {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 10px 0;
-            border-left: 3px solid #4a90e2;
-        }
-
-        /* Better text formatting */
-        .response-text {
-            line-height: 1.6;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
         /* Global Styles */
         body {
             margin: 0;
@@ -39,172 +18,246 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow: hidden;
             position: relative;
-        }
-
-        /* Background Image */
-        body::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: url('https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80') no-repeat center center/cover;
-            filter: blur(5px); /* Blur effect */
-            z-index: -1;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
         }
 
         /* Chat Container */
         .chat-container {
-            background: rgba(255, 255, 255, 0.9);
-            padding: 25px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 0;
             border-radius: 20px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            margin: 20px auto;
-            width: 100%;
-            max-width: 800px;
+            margin: 10px auto;
+            width: 95%;
+            max-width: 1200px;
             z-index: 1;
             backdrop-filter: blur(5px);
             border: 1px solid rgba(255, 255, 255, 0.2);
             display: flex;
             flex-direction: column;
-            height: calc(100vh - 40px); /* Full height minus margins */
+            height: calc(100vh - 20px);
+            overflow: hidden;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 4px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+            background: rgba(255, 255, 255, 0.8);
+            flex-shrink: 0;
+        }
+
+        .header h1 {
+            color: #1976D2;
+            font-size: 1.5rem;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(45deg, #2196F3, #1976D2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1;
+        }
+
+        /* Model Selection */
+        .model-selector {
+            display: flex;
+            align-items: center;
+            margin: 0 0 6px 0;
+            padding: 4px 8px;
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(5px);
+            border-radius: 8px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .model-selector label {
+            margin-right: 8px;
+            font-weight: 500;
+            color: #1976D2;
+            font-size: 0.85rem;
+        }
+
+        .form-select {
+            width: 170px;
+            padding: 5px 10px;
+            border: 1px solid rgba(33, 150, 243, 0.3);
+            border-radius: 6px;
+            background-color: rgba(255, 255, 255, 0.8);
+            font-size: 0.85rem;
+            color: #1976D2;
+            transition: all 0.3s ease;
+        }
+
+        .form-select:focus {
+            border-color: #2196F3;
+            box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
+            background: rgba(255, 255, 255, 0.95);
+            outline: none;
         }
 
         /* Response Container */
         .response-container {
             flex: 1;
-            width: 100%;
             overflow-y: auto;
-            padding: 20px;
-            margin-bottom: 20px;
-            scrollbar-width: thin;
-            -ms-overflow-style: none;
+            padding: 0;
+            margin: 0;
             display: flex;
             flex-direction: column;
+            width: 100%;
+            position: relative;
+            gap: 0;
         }
 
-        .response-container::-webkit-scrollbar {
-            width: 6px;
+        .response-container::before {
+            display: none;
         }
 
-        .response-container::-webkit-scrollbar-thumb {
-            background-color: rgba(0, 0, 0, 0.2);
-            border-radius: 3px;
+        .response-container::after {
+            display: none;
         }
 
         /* Message Bubbles */
         .message-bubble {
-            margin: 8px 0;
-            padding: 12px 16px;
-            border-radius: 15px;
-            max-width: 80%;
-            animation: fadeIn 0.3s ease-in;
-            position: relative;
+            margin: 8px 15px;
+            padding: 8px 12px;
+            border-radius: 12px;
+            max-width: 85%;
+            min-width: 200px;
             word-wrap: break-word;
+            font-size: 14px;
+            line-height: 1.4;
+            display: inline-block;
         }
 
-        .user-message {
-            background: #4a90e2;
-            color: white;
-            margin-left: auto;
-            border-bottom-right-radius: 5px;
-            box-shadow: 0 2px 5px rgba(74, 144, 226, 0.3);
-            align-self: flex-end;
-        }
-
-        .ai-message {
-            background: #f0f2f5;
-            color: #2c3e50;
-            margin-right: auto;
-            border-bottom-left-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            align-self: flex-start;
-            border-left: 3px solid #4a90e2;
-            font-size: 15px;
-            line-height: 1.6;
-        }
-
-        .ai-message h1, .ai-message h2, .ai-message h3 {
-            color: #2c3e50;
-            margin: 15px 0 10px 0;
-            font-weight: 600;
-        }
-
-        .ai-message p {
-            margin: 8px 0;
-        }
-
-        .ai-message ul, .ai-message ol {
-            margin: 10px 0;
-            padding-left: 25px;
-        }
-
-        .ai-message li {
-            margin: 5px 0;
-        }
-
-        .ai-message table {
-            border-collapse: collapse;
-            margin: 15px 0;
-            width: 100%;
-        }
-
-        .ai-message th, .ai-message td {
-            border: 1px solid #ddd;
-            padding: 8px;
+        .message-content {
+            margin: 0;
+            padding: 0;
+            white-space: pre-wrap;
+            line-height: 1.4;
             text-align: left;
         }
 
-        .ai-message th {
-            background-color: #f8f9fa;
+        /* Message Wrapper */
+        .message-wrapper {
+            display: flex;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .user-message-wrapper {
+            justify-content: flex-end;
+        }
+
+        .ai-message-wrapper {
+            justify-content: flex-start;
+        }
+
+        .user-message {
+            background: linear-gradient(135deg, #2196F3, #1976D2);
+            color: white;
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 1px 2px rgba(33, 150, 243, 0.3);
+            padding: 8px 12px;
+            margin: 8px 15px;
+            line-height: 1.4;
+            text-align: left;
+            max-width: 70%;
+        }
+
+        .ai-message {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            color: #2c3e50;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            border-left: 3px solid #2196F3;
+            padding: 8px 12px;
+            margin: 8px 15px;
+            line-height: 1.4;
+            text-align: left;
+            max-width: 70%;
+        }
+
+        .ai-message h1, .ai-message h2, .ai-message h3 {
+            color: #1976D2;
+            margin: 4px 0;
+            font-weight: 600;
+            padding: 0;
+        }
+
+        .ai-message h1 { font-size: 1.2em; }
+        .ai-message h2 { font-size: 1.1em; }
+        .ai-message h3 { font-size: 1.05em; }
+
+        .ai-message ul, .ai-message ol {
+            margin: 4px 0;
+            padding-left: 16px;
+        }
+
+        .ai-message li {
+            margin: 2px 0;
+            line-height: 1.4;
+            padding: 0;
+        }
+
+        .ai-message code {
+            background: #f0f2f5;
+            padding: 1px 4px;
+            border-radius: 4px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.9em;
+            color: #e83e8c;
+        }
+
+        .ai-message pre {
+            background: #2c3e50;
+            color: #f8f9fa;
+            padding: 8px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 4px 0;
+        }
+
+        .ai-message pre code {
+            background: transparent;
+            color: inherit;
+            padding: 0;
         }
 
         .ai-message blockquote {
             border-left: 3px solid #4a90e2;
-            margin: 10px 0;
-            padding: 10px 20px;
-            background: rgba(74, 144, 226, 0.1);
+            margin: 4px 0;
+            padding: 4px 8px;
+            background: #f8f9fa;
             font-style: italic;
         }
 
-        .ai-message code {
-            background: #f8f9fa;
-            padding: 2px 5px;
-            border-radius: 3px;
-            font-family: monospace;
+        /* Model Info */
+        .model-info {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.9);
+            margin-top: 2px;
+            font-style: italic;
+            padding: 0;
         }
 
-        .ai-message hr {
-            border: none;
-            border-top: 1px solid #ddd;
-            margin: 15px 0;
-        }
-
-        .ai-message .email-template {
-            background: #fff;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            padding: 15px;
-            margin: 10px 0;
-        }
-
-        .ai-message .email-subject {
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 10px;
-        }
-
-        .ai-message .email-body {
-            white-space: pre-line;
+        .ai-message .model-info {
+            color: #64748b;
         }
 
         /* Input Area */
         .input-area {
-            padding: 15px;
-            background: white;
-            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 8px 10px;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(0, 0, 0, 0.08);
             border-radius: 0 0 20px 20px;
+            position: sticky;
+            bottom: 0;
+            margin: 0;
+            width: 100%;
         }
 
         .input-group {
@@ -215,49 +268,49 @@
 
         textarea {
             flex: 1;
-            padding: 12px;
-            border: 1px solid #e0e0e0;
-            border-radius: 12px;
-            font-size: 16px;
+            padding: 10px;
+            border: 1px solid rgba(33, 150, 243, 0.3);
+            border-radius: 10px;
+            font-size: 14px;
             transition: all 0.3s ease;
-            background: #ffffff;
+            background: rgba(255, 255, 255, 0.8);
             resize: none;
-            min-height: 50px;
-            max-height: 150px;
+            min-height: 40px;
+            max-height: 120px;
             overflow-y: auto;
         }
 
         textarea:focus {
-            border-color: #4a90e2;
-            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+            border-color: #2196F3;
+            box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
+            background: rgba(255, 255, 255, 0.95);
+            outline: none;
         }
 
         .action-button {
             border: none;
-            padding: 10px 25px;
-            border-radius: 12px;
-            font-size: 16px;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 14px;
             cursor: pointer;
             transition: all 0.3s ease;
-            margin-left: 10px;
+            margin-left: 8px;
+            backdrop-filter: blur(5px);
         }
 
         .action-button.send {
-            background: #28a745;
+            background: linear-gradient(135deg, #2196F3, #1976D2);
             color: white;
         }
 
         .action-button.stop {
-            background: #dc3545;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
             color: white;
         }
 
-        .action-button.send:hover {
-            background: #218838;
-        }
-
-        .action-button.stop:hover {
-            background: #c82333;
+        .action-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         /* Animations */
@@ -265,26 +318,82 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+
+        /* Typing Indicator */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            padding: 4px;
+            gap: 4px;
+        }
+
+        .typing-indicator span {
+            width: 6px;
+            height: 6px;
+            margin: 0 2px;
+        }
+
+        /* Error Message */
+        .error-message {
+            color: #dc3545;
+            padding: 10px;
+            border-radius: 4px;
+            background-color: #fff;
+            border: 1px solid #dc3545;
+            margin: 10px 0;
+        }
+
+        .model-status {
+            display: flex;
+            align-items: center;
+            margin-left: 10px;
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        .model-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #10B981;
+            margin-right: 5px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
     </style>
 </head>
 <body>
-    <!-- ... rest of your template ... -->
-     <!-- Chat Container -->
     <div class="chat-container">
         <div class="header">
-            <img src="{% static 'img/flipkart-logo.png' %}" alt="Flipkart Logo">
             <h1>Prakriti Assistant</h1>
         </div>
         
         <div class="response-container" id="response-container">
             <div class="message-bubble ai-message">
-                Hello! I'm Prakriti, your AI assistant. Ask me anything!
+                <div class="message-content">Hello! I'm Prakriti, your AI assistant. Ask me anything!</div>
             </div>
         </div>
 
         <div class="input-area">
             <form id="chat-form" method="POST">
                 {% csrf_token %}
+                <div class="model-selector">
+                    <label for="model-select">Model:</label>
+                    <select name="model" id="model-select" class="form-select">
+                        {% for model, description in models_with_descriptions %}
+                            <option value="{{ model }}" {% if model == current_model %}selected{% endif %}>{{ description }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="model-status">
+                        <span class="model-indicator"></span>
+                        <span class="model-name">Current: {{ current_model }}</span>
+                    </div>
+                </div>
                 <div class="input-group">
                     <textarea 
                         name="prompt" 
@@ -310,6 +419,19 @@
         const promptInput = document.getElementById('prompt-input');
         const responseContainer = document.getElementById('response-container');
         let currentAIBubble = null;
+        let isAutoScrolling = true;
+
+        // Force initial container height
+        function setInitialContainerHeight() {
+            const viewportHeight = window.innerHeight;
+            const container = document.querySelector('.chat-container');
+            container.style.height = `${viewportHeight - 20}px`;
+            responseContainer.style.maxHeight = `${viewportHeight - 160}px`;
+        }
+
+        // Call on load and resize
+        window.addEventListener('load', setInitialContainerHeight);
+        window.addEventListener('resize', setInitialContainerHeight);
 
         // Get CSRF token
         function getCSRFToken() {
@@ -322,82 +444,62 @@
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 if (this.value.trim()) {
-                    document.getElementById('chat-form').dispatchEvent(new Event('submit'));
+                    document.getElementById('chat-form').requestSubmit();
                 }
             }
         });
 
-        // Improved response formatting with live updates
-        const formatCache = new Map();
-        function formatResponse(text, isPartial = false) {
-            // Use cache for repeated text
-            const cacheKey = text + (isPartial ? '-partial' : '');
-            if (formatCache.has(cacheKey)) {
-                return formatCache.get(cacheKey);
+        // Handle scroll events
+        responseContainer.addEventListener('scroll', function() {
+            const threshold = 100; // pixels from bottom to consider "at bottom"
+            const distanceFromBottom = responseContainer.scrollHeight - responseContainer.scrollTop - responseContainer.clientHeight;
+            isAutoScrolling = distanceFromBottom <= threshold;
+        });
+
+        // Improved auto-scroll to bottom
+        function scrollToBottom() {
+            if (isAutoScrolling) {
+                setTimeout(() => {
+                    responseContainer.scrollTo({
+                        top: responseContainer.scrollHeight,
+                        behavior: 'smooth'
+                    });
+                }, 100);
             }
-
-            let formatted = text;
-            
-            // Batch regex operations
-            const replacements = [
-                [/\n\s*/g, '<br>'],
-                [/\*\*(.*?)\*\*/g, '<strong>$1</strong>'],
-                [/\*(.*?)\*/g, '<em>$1</em>'],
-                [/(?:^|\n)[\d*-][\s.)]+(.*?)(?=\n|$)/gm, '\n<li>$1</li>'],
-                [/(?:^|\n)([A-Z][^.!?:\n]*:)/g, '\n<h3>$1</h3>']
-            ];
-
-            for (const [pattern, replacement] of replacements) {
-                formatted = formatted.replace(pattern, replacement);
-            }
-
-            // Handle email template
-            if (formatted.includes('Subject:')) {
-                const emailParts = formatted.split(/(Subject:.*?)(?=Dear|$)/s);
-                formatted = emailParts.map((part, index) => {
-                    if (part.startsWith('Subject:')) {
-                        return `<div class="email-template"><div class="email-subject">${part.trim()}</div>`;
-                    } else if (index > 1) {
-                        return `<div class="email-body">${part.trim()}</div></div>`;
-                    }
-                    return part;
-                }).join('');
-            }
-
-            // Add typing cursor for partial responses
-            if (isPartial) {
-                formatted += '<span class="typing-cursor">▋</span>';
-            }
-
-            // Cache the result
-            formatCache.set(cacheKey, formatted);
-            
-            // Limit cache size
-            if (formatCache.size > 100) {
-                const firstKey = formatCache.keys().next().value;
-                formatCache.delete(firstKey);
-            }
-
-            return formatted;
         }
 
-        // Modified submit handler with improved streaming
+        // Force scroll on new message
+        function forceScrollToBottom() {
+            isAutoScrolling = true;
+            setTimeout(() => {
+                responseContainer.scrollTo({
+                    top: responseContainer.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }, 100);
+        }
+
+        // Modified submit handler
         document.getElementById('chat-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             const userMessage = promptInput.value.trim();
+            const selectedModel = document.getElementById('model-select').value;
 
             if (!userMessage) return;
 
             // Add user message
+            const userWrapper = document.createElement('div');
+            userWrapper.className = 'message-wrapper user-message-wrapper';
             const userBubble = document.createElement('div');
             userBubble.className = 'message-bubble user-message';
-            userBubble.textContent = userMessage;
-            responseContainer.appendChild(userBubble);
+            userBubble.innerHTML = `<div class="message-content">${userMessage}</div><div class="model-info">Using model: ${selectedModel === 'auto' ? 'Auto (Selecting best model)' : selectedModel}</div>`;
+            userWrapper.appendChild(userBubble);
+            responseContainer.appendChild(userWrapper);
+            forceScrollToBottom();
 
-            // Clear input and scroll
+            // Clear input
             promptInput.value = '';
             promptInput.style.height = 'auto';
-            responseContainer.scrollTop = responseContainer.scrollHeight;
 
             // Change button to Stop
             actionButton.classList.remove('send');
@@ -405,32 +507,33 @@
             actionButton.textContent = 'Stop';
 
             // Add AI response container
+            const aiWrapper = document.createElement('div');
+            aiWrapper.className = 'message-wrapper ai-message-wrapper';
             currentAIBubble = document.createElement('div');
             currentAIBubble.className = 'message-bubble ai-message';
             currentAIBubble.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
-            responseContainer.appendChild(currentAIBubble);
-
-            // Prepare form data with CSRF token
-            const formData = new FormData();
-            formData.append('prompt', userMessage);
-            formData.append('csrfmiddlewaretoken', getCSRFToken());
-
-            // Use RequestInit object for better performance
-            const requestInit = {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRFToken': getCSRFToken(),
-                    'Accept': 'text/event-stream',
-                },
-                signal: (controller = new AbortController()).signal
-            };
+            aiWrapper.appendChild(currentAIBubble);
+            responseContainer.appendChild(aiWrapper);
+            forceScrollToBottom();
 
             try {
-                const response = await fetch(window.location.pathname, requestInit);
+                const response = await fetch(window.location.pathname, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': getCSRFToken(),
+                        'Accept': 'text/event-stream',
+                    },
+                    body: new URLSearchParams({
+                        'prompt': userMessage,
+                        'model': selectedModel,
+                        'csrfmiddlewaretoken': getCSRFToken()
+                    }),
+                    signal: (controller = new AbortController()).signal
+                });
+
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || 'Network response was not ok');
+                    throw new Error('Network response was not ok');
                 }
 
                 const reader = response.body.getReader();
@@ -438,16 +541,13 @@
                 let streamBuffer = '';
                 let renderTimeout;
 
-                // Create a document fragment for batch updates
-                const fragment = document.createDocumentFragment();
-                const tempDiv = document.createElement('div');
-
                 while (true) {
                     const {done, value} = await reader.read();
                     
                     if (done) {
                         if (streamBuffer) {
-                            currentAIBubble.innerHTML = formatResponse(streamBuffer);
+                            currentAIBubble.innerHTML = `<div class="message-content">${formatResponse(streamBuffer)}</div>`;
+                            forceScrollToBottom();
                         }
                         break;
                     }
@@ -461,27 +561,22 @@
                                 const data = JSON.parse(line.slice(6));
                                 if (data.error) {
                                     currentAIBubble.innerHTML = `<div class="error-message">${data.error}</div>`;
-                                    // Reset UI state on error
                                     actionButton.classList.remove('stop');
                                     actionButton.classList.add('send');
                                     actionButton.textContent = 'Send';
                                     controller = null;
+                                    forceScrollToBottom();
                                     return;
                                 }
                                 if (data.text) {
-                                    // Prevent JSON display by properly escaping the content
-                                    const sanitizedText = data.text
-                                        .replace(/&/g, '&amp;')
-                                        .replace(/</g, '&lt;')
-                                        .replace(/>/g, '&gt;');
-                                    streamBuffer += sanitizedText;
+                                    streamBuffer += data.text;
                                     
-                                    // Use RAF for smooth rendering
                                     if (!renderTimeout) {
                                         renderTimeout = requestAnimationFrame(() => {
                                             try {
-                                                currentAIBubble.innerHTML = formatResponse(streamBuffer, true);
-                                                responseContainer.scrollTop = responseContainer.scrollHeight;
+                                                const formattedText = formatResponse(streamBuffer, true).trim();
+                                                currentAIBubble.innerHTML = `<div class="message-content">${formattedText}</div>`;
+                                                forceScrollToBottom();
                                             } catch (e) {
                                                 console.error('Error formatting response:', e);
                                                 currentAIBubble.innerHTML = `<div class="error-message">Error formatting response</div>`;
@@ -493,32 +588,80 @@
                             } catch (e) {
                                 console.error('Error parsing SSE data:', e);
                                 currentAIBubble.innerHTML = `<div class="error-message">Error: Invalid response format</div>`;
-                                // Reset UI state on error
                                 actionButton.classList.remove('stop');
                                 actionButton.classList.add('send');
                                 actionButton.textContent = 'Send';
                                 controller = null;
+                                forceScrollToBottom();
                             }
                         }
                     }
                 }
 
-                // Reset UI state
-                currentAIBubble = null;
                 actionButton.classList.remove('stop');
                 actionButton.classList.add('send');
                 actionButton.textContent = 'Send';
+                forceScrollToBottom();
 
             } catch (error) {
                 console.error('Fetch error:', error);
                 currentAIBubble.innerHTML = `<div class="error-message">Error: ${error.message}</div>`;
-                
-                // Reset UI state
                 actionButton.classList.remove('stop');
                 actionButton.classList.add('send');
                 actionButton.textContent = 'Send';
+                forceScrollToBottom();
             }
         });
+
+        // Improved response formatting with live updates
+        function formatResponse(text, isPartial = false) {
+            if (!text) return '';
+
+            // Remove think tags and their content
+            text = text.replace(/<think>[\s\S]*?<\/think>/g, '');
+            
+            // Remove multiple consecutive blank lines
+            text = text.replace(/\n\s*\n\s*\n/g, '\n\n');
+            
+            let formatted = text
+                // Headers
+                .replace(/^### (.*?)$/gm, '<h3>$1</h3>')
+                .replace(/^## (.*?)$/gm, '<h2>$1</h2>')
+                .replace(/^# (.*?)$/gm, '<h1>$1</h1>')
+                
+                // Lists
+                .replace(/^\s*[-*]\s+(.*?)$/gm, '<li>$1</li>')
+                .replace(/^\s*(\d+)\.\s+(.*?)$/gm, '<li>$1. $2</li>')
+                
+                // Code blocks
+                .replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code class="language-$1">$2</code></pre>')
+                
+                // Inline code
+                .replace(/`([^`]+)`/g, '<code>$1</code>')
+                
+                // Bold and Italic
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                
+                // Blockquotes
+                .replace(/^\>(.*?)$/gm, '<blockquote>$1</blockquote>')
+                
+                // Line breaks
+                .replace(/\n/g, '<br>');
+
+            // Wrap lists in ul/ol tags
+            formatted = formatted
+                .replace(/(<li>.*?<\/li>)\s*<br>/g, '$1')
+                .replace(/(<li>(\d+)\. .*?<\/li>)+/g, '<ol>$&</ol>')
+                .replace(/(<li>[^0-9].*?<\/li>)+/g, '<ul>$&</ul>');
+
+            // Add typing cursor for partial responses
+            if (isPartial) {
+                formatted += '<span class="typing-cursor">▋</span>';
+            }
+
+            return formatted.trim(); // Trim any extra whitespace
+        }
 
         // Stop button functionality
         actionButton.addEventListener('click', function() {
@@ -531,6 +674,15 @@
                 actionButton.textContent = 'Send';
             }
         });
+
+        // Auto-resize textarea
+        promptInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+
+        // Initial scroll to bottom
+        scrollToBottom();
 
         // Add some CSS for the typing cursor animation
         const style = document.createElement('style');
@@ -569,20 +721,47 @@
             .typing-indicator {
                 display: flex;
                 align-items: center;
-                padding: 10px;
+                padding: 4px;
+                gap: 4px;
             }
 
             .typing-indicator span {
-                display: inline-block;
-                width: 8px;
-                height: 8px;
-                background: #4a90e2;
-                border-radius: 50%;
-                margin: 0 4px;
-                animation: bounce 1.4s infinite ease-in-out;
+                width: 6px;
+                height: 6px;
+                margin: 0 2px;
             }
         `;
         document.head.appendChild(errorStyle);
+
+        // Handle model selection
+        document.getElementById('model-select').addEventListener('change', function() {
+            const selectedModel = this.value;
+            const modelNameSpan = document.querySelector('.model-name');
+            modelNameSpan.textContent = `Current: ${selectedModel === 'auto' ? 'Auto (Selecting best model)' : selectedModel}`;
+            
+            // Clear the chat history
+            responseContainer.innerHTML = '';
+            
+            // Add a new welcome message
+            const welcomeMessage = document.createElement('div');
+            welcomeMessage.className = 'message-bubble ai-message';
+            welcomeMessage.innerHTML = `<div class="message-content">Hello! I'm Prakriti, your AI assistant. I'm now using the ${selectedModel === 'auto' ? 'auto-selected' : selectedModel} model. Ask me anything!</div>`;
+            responseContainer.appendChild(welcomeMessage);
+            
+            // Update the model in session
+            fetch(window.location.pathname, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': getCSRFToken()
+                },
+                body: new URLSearchParams({
+                    'update_model': 'true',
+                    'model': selectedModel,
+                    'csrfmiddlewaretoken': getCSRFToken()
+                })
+            });
+        });
     </script>
 </body>
 </html>

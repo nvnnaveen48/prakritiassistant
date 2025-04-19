@@ -1,0 +1,11 @@
+[Unit]
+Description=gunicorn socket
+
+[Socket]
+ListenStream=/run/gunicorn.sock
+SocketUser=myntra
+SocketGroup=myntra
+SocketMode=660
+
+[Install]
+WantedBy=sockets.target 
